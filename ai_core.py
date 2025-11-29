@@ -7,25 +7,24 @@ import streamlit as st
 GLOBAL_KEY_PATH = Path.home() / ".nio_openai_key"
 
 def load_openai_key() -> str:
-    # 1) Streamlit Cloud secrets (primary for deployment)
+    # 1. Streamlit Cloud secrets
     try:
-        return st.secrets["OPENAI_API_KEY"]
+        if "OPENAI_API_KEY" in st.secrets:
+            return st.secrets["OPENAI_API_KEY"].strip()
     except Exception:
         pass
 
-    # 2) Environment variable (backup for deployment)
+    # 2. Local environment variable
     env_key = os.getenv("OPENAI_API_KEY")
     if env_key:
         return env_key.strip()
 
-    # 3) Local dev key file (development only)
+    # 3. Local key file
     if GLOBAL_KEY_PATH.exists():
-        key = GLOBAL_KEY_PATH.read_text(encoding="utf-8").strip()
-        if key:
-            return key
+        return GLOBAL_KEY_PATH.read_text(encoding="utf-8").strip()
 
     raise RuntimeError(
-        "No OpenAI key found. Add OPENAI_API_KEY to Streamlit secrets or environment variables."
+        "No OpenAI key found. Set OPENAI_API_KEY in Streamlit secrets or local env."
     )
 
 def get_openai_client() -> OpenAI:
