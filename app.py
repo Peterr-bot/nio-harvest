@@ -18,7 +18,7 @@ from cleaner import clean_and_chunk
 from scorer import score_chunk
 
 # Slack integration
-SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL", "https://hooks.slack.com/services/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")
+SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
 def send_quotes_to_slack(quotes: list[dict], limit: int = 5) -> None:
     """Send top N quotes to Slack via Incoming Webhook."""
