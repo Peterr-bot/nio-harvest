@@ -215,20 +215,29 @@ def run_harvest(source: str,
         chunks = clean_and_chunk(raw_html)
         st.write(f"  · Generated {len(chunks)} chunks")
 
+        chunk_count = 0
         for chunk in chunks:
+            chunk_count += 1
             result = score_chunk(chunk)
             if not result:
+                st.write(f"    · Chunk {chunk_count}: No result from AI")
                 continue
 
             # Handle both single dict and list of dicts from scorer
             results = result if isinstance(result, list) else [result]
 
             for quote_result in results:
-                if not quote_result.get("is_quote_worthy", False):
+                score = quote_result.get("punch_score", 0)
+                is_worthy = quote_result.get("is_quote_worthy", False)
+                line = quote_result.get("edited_line", "")[:50] + "..."
+
+                st.write(f"    · Chunk {chunk_count}: Score {score}, Worthy: {is_worthy}, '{line}'")
+
+                if not is_worthy:
                     continue
 
-                score = quote_result.get("punch_score", 0)
                 if score < MIN_PUNCH_SCORE:
+                    st.write(f"      → Filtered out (score {score} < {MIN_PUNCH_SCORE})")
                     continue
 
                 # Merge article metadata + model result
@@ -239,6 +248,7 @@ def run_harvest(source: str,
                     **quote_result,
                 }
                 all_quotes.append(quote_record)
+                st.write(f"      → ✅ Added quote!")
 
     # 3) Deduplicate by edited_line
     seen = set()
