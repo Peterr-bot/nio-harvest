@@ -1,4 +1,4 @@
-# config.py
+# config.py - Updated for Streamlit Cloud deployment
 BASE_URL = "https://www.marcusbpeter.com/t/posts"
 SUBSTACK_RSS_URL = "https://www.avethinkinstitute.com/feed"
 ARCHIVE_URL = "https://www.avethinkinstitute.com/archive"
