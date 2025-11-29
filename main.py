@@ -99,7 +99,7 @@ def run_harvest(source="ghost", limit=None, since=None, url=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Catholic Quote Harvester")
+    parser = argparse.ArgumentParser(description="Nio Harvest")
     parser.add_argument('--limit', type=int, help='Limit number of articles to process')
     parser.add_argument('--since', type=str, help='Only process articles since date (YYYY-MM-DD)')
     parser.add_argument('--source', type=str, choices=['ghost', 'deacon', 'ray', 'url'], default='ghost',

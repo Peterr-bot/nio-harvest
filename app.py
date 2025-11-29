@@ -59,7 +59,7 @@ def send_quotes_to_slack(quotes: list[dict], limit: int = 5) -> None:
                 return
 
             # Simple, clean message
-            message_text = "✝️ *Catholic Quote Harvester Results*\n\n" + "\n\n".join(quote_lines)
+            message_text = "✝️ *Nio Harvest Results*\n\n" + "\n\n".join(quote_lines)
 
             # Minimal payload to reduce issues
             payload = {"text": message_text}
@@ -67,7 +67,7 @@ def send_quotes_to_slack(quotes: list[dict], limit: int = 5) -> None:
             # Add headers for better compatibility
             headers = {
                 "Content-Type": "application/json",
-                "User-Agent": "Catholic-Quote-Harvester/1.0"
+                "User-Agent": "Nio-Harvest/1.0"
             }
 
             # Make request with explicit settings
@@ -257,7 +257,7 @@ def run_harvest(source: str,
 
 # ---------- Streamlit UI ----------
 
-st.set_page_config(page_title="Catholic Quote Harvester", layout="wide")
+st.set_page_config(page_title="Nio Harvest", layout="wide")
 
 # Initialize session state
 if "quotes" not in st.session_state:
@@ -265,7 +265,7 @@ if "quotes" not in st.session_state:
 
 set_background()  # Auto-detect background image
 
-st.title("✙ Catholic Quote Harvester")
+st.title("✙ Nio Harvest")
 st.caption("Marcus · Dr. Ray · Deacon Harold · Single URL")
 
 with st.sidebar:
