@@ -265,8 +265,18 @@ if "quotes" not in st.session_state:
 
 set_background()  # Auto-detect background image
 
-st.title("✙ Nio Harvest")
-st.caption("Marcus · Dr. Ray · Deacon Harold · Single URL")
+# Header with logo
+col1, col2 = st.columns([1, 4])
+
+with col1:
+    # Display harvester logo
+    logo_path = pathlib.Path("assets/logo/Open-Cab Combine Harvester.G08.2k.png")
+    if logo_path.exists():
+        st.image(str(logo_path), width=120)
+
+with col2:
+    st.title("🚜 Nio Harvest")
+    st.caption("Marcus · Dr. Ray · Deacon Harold · Single URL")
 
 with st.sidebar:
     st.header("Source & Filters")
