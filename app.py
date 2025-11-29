@@ -265,18 +265,28 @@ if "quotes" not in st.session_state:
 
 set_background()  # Auto-detect background image
 
-# Header with logo
-col1, col2 = st.columns([1, 4])
+# Centered Header with logo
+logo_path = pathlib.Path("assets/logo/Open-Cab Combine Harvester.G08.2k.png")
 
-with col1:
-    # Display harvester logo
-    logo_path = pathlib.Path("assets/logo/Open-Cab Combine Harvester.G08.2k.png")
-    if logo_path.exists():
-        st.image(str(logo_path), width=120)
+# Create centered layout with HTML/CSS
+st.markdown("""
+<div style="display: flex; flex-direction: column; align-items: center; margin: 2rem 0;">
+    <div style="margin-bottom: 1rem;">
+""", unsafe_allow_html=True)
 
-with col2:
-    st.title("🚜 Nio Harvest")
-    st.caption("Marcus · Dr. Ray · Deacon Harold · Single URL")
+# Display centered logo
+if logo_path.exists():
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col2:
+        st.image(str(logo_path), width=140)
+
+# Centered title and subtitle
+st.markdown("""
+    </div>
+    <h1 style="text-align: center; margin: 0; font-size: 3rem; font-weight: bold;">🚜 Nio Harvest</h1>
+    <p style="text-align: center; margin: 0.5rem 0 0 0; font-size: 1.1rem; color: #666;">Marcus · Dr. Ray · Deacon Harold · Single URL</p>
+</div>
+""", unsafe_allow_html=True)
 
 with st.sidebar:
     st.header("Source & Filters")
