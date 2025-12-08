@@ -16,6 +16,7 @@ from fetcher import (
 )
 from cleaner import clean_and_chunk
 from scorer import score_chunk
+from ai_core import test_streamlit_secrets
 
 # Slack integration
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
@@ -300,6 +301,14 @@ st.markdown("""
 
 with st.sidebar:
     st.header("Source & Filters")
+
+    # Test OpenAI key loading
+    if st.button("🔧 Test OpenAI Key", help="Validate API key configuration"):
+        test_result = test_streamlit_secrets()
+        if "✅" in test_result:
+            st.success(test_result)
+        else:
+            st.error(test_result)
 
     source_label = st.selectbox(
         "Content source",

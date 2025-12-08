@@ -5,12 +5,27 @@ from datetime import datetime
 from email.utils import parsedate_to_datetime
 from config import HEADERS, SUBSTACK_RSS_URL, DEACON_RSS_URL, RAY_RSS_URL
 
+# Robust headers for Streamlit Cloud deployment
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+}
+
 
 def get_article_links(base_url: str) -> list[str]:
     """Get all article links from the base URL."""
     try:
-        response = requests.get(base_url, headers=HEADERS)
-        response.raise_for_status()
+        # Try browser headers first, fallback to basic headers
+        try:
+            response = requests.get(base_url, headers=BROWSER_HEADERS, timeout=10)
+            response.raise_for_status()
+        except:
+            response = requests.get(base_url, headers=HEADERS, timeout=10)
+            response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
         links = []
@@ -41,8 +56,13 @@ def get_article_links(base_url: str) -> list[str]:
 def fetch_article(url: str) -> dict:
     """Fetch a single article and extract metadata."""
     try:
-        response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        # Try browser headers first, fallback to basic headers
+        try:
+            response = requests.get(url, headers=BROWSER_HEADERS, timeout=10)
+            response.raise_for_status()
+        except:
+            response = requests.get(url, headers=HEADERS, timeout=10)
+            response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -718,9 +738,14 @@ def fetch_single_url(target_url: str):
     so the rest of the pipeline (cleaner -> scorer -> exporter) just works.
     """
     print(f"Fetching single URL: {target_url}")
-    headers = {"User-Agent": "QuoteHarvester/1.0"}
-    resp = requests.get(target_url, headers=headers, timeout=10)
-    resp.raise_for_status()
+
+    # Try browser headers first, fallback to basic headers
+    try:
+        resp = requests.get(target_url, headers=BROWSER_HEADERS, timeout=10)
+        resp.raise_for_status()
+    except:
+        resp = requests.get(target_url, headers=HEADERS, timeout=10)
+        resp.raise_for_status()
 
     html = resp.text
     soup = BeautifulSoup(html, "lxml")

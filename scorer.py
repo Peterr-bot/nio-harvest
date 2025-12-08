@@ -5,7 +5,7 @@ from typing import Optional, Dict, Any
 from ai_core import get_openai_client
 from config import MODEL_NAME
 
-client = get_openai_client()
+# Don't initialize client at import time - use lazy loading
 
 SYSTEM_PROMPT = """
 You are a fierce, theologically precise Catholic editor. Your job is to extract
@@ -46,6 +46,8 @@ def score_chunk(chunk_text: str) -> Optional[list[Dict[str, Any]]]:
     or None if anything goes wrong.
     """
     try:
+        # Lazy load client when actually needed
+        client = get_openai_client()
         response = client.chat.completions.create(
             model=MODEL_NAME,
             messages=[
@@ -74,7 +76,11 @@ def score_chunk(chunk_text: str) -> Optional[list[Dict[str, Any]]]:
 
     except json.JSONDecodeError as e:
         print(f"[!] JSON parse error in score_chunk: {e}")
+        print(f"[!] Raw content: {content}")
         return None
     except Exception as e:
         print(f"[!] LLM error in score_chunk: {e}")
+        print(f"[!] Error type: {type(e).__name__}")
+        import traceback
+        print(f"[!] Full traceback: {traceback.format_exc()}")
         return None
