@@ -5,12 +5,27 @@ from datetime import datetime
 from email.utils import parsedate_to_datetime
 from config import HEADERS, SUBSTACK_RSS_URL, DEACON_RSS_URL, RAY_RSS_URL
 
+# Robust headers for Streamlit Cloud deployment
+# Note: requests library handles gzip automatically, so we don't need to specify Accept-Encoding
+BROWSER_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+}
+
 
 def get_article_links(base_url: str) -> list[str]:
     """Get all article links from the base URL."""
     try:
-        response = requests.get(base_url, headers=HEADERS)
-        response.raise_for_status()
+        # Try browser headers first, fallback to basic headers
+        try:
+            response = requests.get(base_url, headers=BROWSER_HEADERS, timeout=10)
+            response.raise_for_status()
+        except:
+            response = requests.get(base_url, headers=HEADERS, timeout=10)
+            response.raise_for_status()
 
         soup = BeautifulSoup(response.text, 'html.parser')
         links = []
@@ -41,24 +56,39 @@ def get_article_links(base_url: str) -> list[str]:
 def fetch_article(url: str) -> dict:
     """Fetch a single article and extract metadata."""
     try:
-        response = requests.get(url, headers=HEADERS)
-        response.raise_for_status()
+        # Try browser headers first, fallback to basic headers
+        try:
+            response = requests.get(url, headers=BROWSER_HEADERS, timeout=10)
+            response.raise_for_status()
+        except:
+            response = requests.get(url, headers=HEADERS, timeout=10)
+            response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # Ensure proper encoding - requests should handle this automatically
+        response.encoding = response.apparent_encoding
+        html = response.text or ""
+        print(f"[fetch_article] {url} -> html length: {len(html)}")
 
-        # Extract title
-        title_elem = soup.find('title')
-        if not title_elem:
-            title_elem = soup.find('h1')
-        title = title_elem.get_text().strip() if title_elem else "Untitled"
+        soup = BeautifulSoup(html, 'html.parser')
 
-        # Extract published date
+        # ---- TITLE ----
+        title_elem = (
+            soup.find('meta', property='og:title')
+            or soup.find('meta', attrs={'name': 'twitter:title'})
+            or soup.find('title')
+            or soup.find('h1')
+        )
+        title = title_elem.get("content").strip() if title_elem and title_elem.has_attr("content") else (
+            title_elem.get_text().strip() if title_elem else "Untitled"
+        )
+
+        # ---- PUBLISHED DATE ----
         published_at = datetime.now().strftime("%Y-%m-%d")
         date_selectors = [
             'time[datetime]',
             '.post-date',
             '.published',
-            '[class*="date"]'
+            '[class*="date"]',
         ]
 
         for selector in date_selectors:
@@ -70,7 +100,6 @@ def fetch_article(url: str) -> dict:
             if not date_text:
                 continue
 
-            # Try multiple common date formats
             date_formats = [
                 "%Y-%m-%d",
                 "%Y-%m-%dT%H:%M:%S",
@@ -81,7 +110,7 @@ def fetch_article(url: str) -> dict:
             parsed = None
             for fmt in date_formats:
                 try:
-                    parsed = datetime.strptime(date_text, fmt)
+                    parsed = datetime.strptime(date_text.split('T')[0], fmt)
                     break
                 except ValueError:
                     continue
@@ -90,13 +119,17 @@ def fetch_article(url: str) -> dict:
                 published_at = parsed.strftime("%Y-%m-%d")
                 break
 
-        # Extract main content
+        # ---- CONTENT ----
+        # Add Ghost-friendly selectors first
         content_selectors = [
-            'article',
+            '.gh-content',
+            '.gh-article',
+            '.post-full-content',
             '.post-content',
             '.content',
+            'article',
             'main',
-            '.entry-content'
+            '.entry-content',
         ]
 
         raw_html = ""
@@ -107,15 +140,19 @@ def fetch_article(url: str) -> dict:
                 break
 
         if not raw_html:
-            # Fallback: get body content
+            # Fallback: body
             body = soup.find('body')
-            raw_html = str(body) if body else ""
+            if body:
+                raw_html = str(body)
+            else:
+                # Final fallback: entire HTML so we never return empty
+                raw_html = html
 
         return {
             "title": title,
             "url": url,
             "published_at": published_at,
-            "raw_html": raw_html
+            "raw_html": raw_html,
         }
 
     except requests.RequestException as e:
@@ -124,7 +161,7 @@ def fetch_article(url: str) -> dict:
             "title": "Error",
             "url": url,
             "published_at": datetime.now().strftime("%Y-%m-%d"),
-            "raw_html": ""
+            "raw_html": "",
         }
 
 
@@ -718,9 +755,14 @@ def fetch_single_url(target_url: str):
     so the rest of the pipeline (cleaner -> scorer -> exporter) just works.
     """
     print(f"Fetching single URL: {target_url}")
-    headers = {"User-Agent": "QuoteHarvester/1.0"}
-    resp = requests.get(target_url, headers=headers, timeout=10)
-    resp.raise_for_status()
+
+    # Try browser headers first, fallback to basic headers
+    try:
+        resp = requests.get(target_url, headers=BROWSER_HEADERS, timeout=10)
+        resp.raise_for_status()
+    except:
+        resp = requests.get(target_url, headers=HEADERS, timeout=10)
+        resp.raise_for_status()
 
     html = resp.text
     soup = BeautifulSoup(html, "lxml")
